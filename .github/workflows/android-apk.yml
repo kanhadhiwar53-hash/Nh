@@ -1,0 +1,50 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build debug APK
+        run: |
+          if [ -f ./NHSeries/gradlew ]; then
+            cd NHSeries
+          elif [ -f ./gradlew ]; then
+            :
+          else
+            echo "Gradle wrapper not found. Expected NHSeries/gradlew or ./gradlew."
+            exit 1
+          fi
+          chmod +x ./gradlew
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NHSeries-debug-apk
+          path: |
+            NHSeries/app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
