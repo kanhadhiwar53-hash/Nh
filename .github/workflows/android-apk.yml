@@ -26,18 +26,29 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.2'
+
       - name: Build debug APK
+        shell: bash
         run: |
-          if [ -f ./NHSeries/gradlew ]; then
+          if [[ -f NHSeries/gradlew ]]; then
             cd NHSeries
-          elif [ -f ./gradlew ]; then
-            :
+            chmod +x ./gradlew
+            ./gradlew --no-daemon assembleDebug
+          elif [[ -f gradlew ]]; then
+            chmod +x ./gradlew
+            ./gradlew --no-daemon assembleDebug
+          elif [[ -f NHSeries/build.gradle && -f NHSeries/settings.gradle ]]; then
+            gradle -p NHSeries --no-daemon assembleDebug
+          elif [[ -f build.gradle && -f settings.gradle ]]; then
+            gradle --no-daemon assembleDebug
           else
-            echo "Gradle wrapper not found. Expected NHSeries/gradlew or ./gradlew."
+            echo "Android Gradle project files not found. Upload the NHSeries source folder first."
             exit 1
           fi
-          chmod +x ./gradlew
-          ./gradlew --no-daemon assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
